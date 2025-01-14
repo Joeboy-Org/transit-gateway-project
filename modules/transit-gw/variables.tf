@@ -11,3 +11,7 @@ variable "vpc_attachments" {
 variable "vpc_id" {
   type = string
 }
+
+variable "app_account_id" {
+  type = string
+}
