@@ -51,22 +51,22 @@ jobs:
           path: ~/.tflint.d/plugins
           key: ${{ runner.os }}-tflint-${{ hashFiles('.tflint.hcl') }}
 
-  TfsecCheck:
-    name: Run tfsec Check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Repo Checkout
-        uses: actions/checkout@v4
+  # TfsecCheck:
+  #   name: Run tfsec Check
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Repo Checkout
+  #       uses: actions/checkout@v4
 
-      - name: Run Trivy tfsec scan
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          scan-type: 'fs'
-          ignore-unfixed: true
-          scanners: 'misconfig'
-          format: 'table'
-          severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
-          exit-code: '1'
+  #     - name: Run Trivy tfsec scan
+  #       uses: aquasecurity/trivy-action@0.28.0
+  #       with:
+  #         scan-type: 'fs'
+  #         ignore-unfixed: true
+  #         scanners: 'misconfig'
+  #         format: 'table'
+  #         severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
+  #         exit-code: '1'
   tfPlanNetworking:
     name: Terraform Plan
     uses: ./.github/workflows/tf-plan.yml

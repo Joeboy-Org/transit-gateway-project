@@ -92,7 +92,7 @@ resource "aws_route" "public" {
 }
 
 resource "aws_route" "private" {
-  for_each               = { for key, value in var.public_subnets : key => value if var.public_subnets != {} }
+  for_each               = { for key, value in var.private_subnets : key => value if var.private_subnets != {} }
   route_table_id         = aws_route_table.private[each.key].id
   destination_cidr_block = "0.0.0.0/0"
   nat_gateway_id         = aws_nat_gateway.this[each.key].id
