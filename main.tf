@@ -8,7 +8,7 @@ module "transit_vpc" {
     private-subnet-A = {
       availability_zone       = "ap-southeast-2a"
       cidr_block              = "10.16.1.0/24"
-      nat_public_subnet_name       =  "public-subnet-A"
+      natgw_pub_sub_name       =  "public-subnet-A"
     }
   }
   public_subnets = {
