@@ -1,6 +1,6 @@
 resource "aws_ec2_transit_gateway" "this" {
   count = var.environment == "networking" ? 1 : 0
-
+  auto_accept_shared_attachments = "enable"
   tags = {
     Name = "${var.environment}-transit-gateway"
   }
@@ -49,12 +49,12 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "this" {
   }
 }
 
-resource "aws_ec2_transit_gateway_vpc_attachment_accepter" "this" {
-  count = var.environment == "networking" ? 1 : 0
+# resource "aws_ec2_transit_gateway_vpc_attachment_accepter" "this" {
+#   count = var.environment == "networking" ? 1 : 0
 
-  transit_gateway_attachment_id = aws_ec2_transit_gateway_vpc_attachment.this["devops-tgw-attachment"].id
+#   transit_gateway_attachment_id = aws_ec2_transit_gateway_vpc_attachment.this["devops-tgw-attachment"].id
 
-  tags = {
-    Name = "${var.environment}-vpc-attachement-acceptor"
-  }
-}
+#   tags = {
+#     Name = "${var.environment}-vpc-attachement-acceptor"
+#   }
+# }
