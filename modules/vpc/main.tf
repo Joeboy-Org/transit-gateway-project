@@ -1,6 +1,8 @@
 resource "aws_vpc" "this" {
-  cidr_block       = var.vpc_cidr_block
-  instance_tenancy = "default"
+  cidr_block           = var.vpc_cidr_block
+  instance_tenancy     = "default"
+  enable_dns_support   = true
+  enable_dns_hostnames = true
 
   tags = {
     Name = "${var.vpc_name}-${var.environment}-vpc"
@@ -11,6 +13,7 @@ resource "aws_subnet" "public" {
   for_each                = { for key, value in var.public_subnets : key => value if var.public_subnets != {} }
   vpc_id                  = aws_vpc.this.id
   cidr_block              = each.value.cidr_block
+  availability_zone       = each.value.availability_zone
   map_public_ip_on_launch = true
   tags = {
     Name = "${var.vpc_name}-${var.environment}-${each.key}"
@@ -20,6 +23,7 @@ resource "aws_subnet" "private" {
   for_each                = { for key, value in var.private_subnets : key => value if var.private_subnets != {} }
   vpc_id                  = aws_vpc.this.id
   cidr_block              = each.value.cidr_block
+  availability_zone       = each.value.availability_zone
   map_public_ip_on_launch = false
   tags = {
     Name = "${var.vpc_name}-${var.environment}-${each.key}"
