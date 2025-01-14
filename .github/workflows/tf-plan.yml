@@ -1,0 +1,41 @@
+name: Terraform Plan
+
+on:
+  workflow_call:
+    inputs:
+      ENVIRONMENT:
+        required: true
+        type: string
+      AWS_DEFAULT_REGION:
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency: tf_${{ inputs.ENVIRONMENT }}
+
+jobs:
+  TerraformPlan:
+    name: Terraform Plan - ${{ inputs.ENVIRONMENT }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.ENVIRONMENT }}
+    steps:
+      - name: Repo Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ inputs.AWS_DEFAULT_REGION }}
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ vars.TERRAFORM_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init -backend-config=environments/${{ inputs.ENVIRONMENT }}/backend.tfvars
+
+      - name: Terraform Plan
+        run: terraform plan -var-file=environments/${{ inputs.ENVIRONMENT }}/${{ inputs.ENVIRONMENT }}.tfvars

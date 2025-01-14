@@ -1,0 +1,86 @@
+name: Terraform Format, Lint, and Check
+
+on:
+  pull_request:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  tfFormatValidate:
+    name: Terraform Format and Validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repo Checkout
+        uses: actions/checkout@v4
+      
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ vars.TERRAFORM_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init -backend=false
+
+      - name: Terraform Format Check
+        continue-on-error: true 
+        run: terraform fmt -check -recursive || (echo "Terraform fmt required for the following files:" && terraform fmt -diff -recursive && exit 1)
+
+      - name: Terraform Validate
+        if: always()
+        run: terraform validate
+
+  TflintCheck:
+    name: Run tfLint Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repo Checkout
+        uses: actions/checkout@v4
+
+      - uses: terraform-linters/setup-tflint@v4
+        name: Setup TFLint
+        with:
+          tflint_version: latest
+
+      - name: Run tfLint
+        run: tflint -f compact
+
+      - name: Cache tfLint Plugins
+        uses: actions/cache@v4
+        with:
+          path: ~/.tflint.d/plugins
+          key: ${{ runner.os }}-tflint-${{ hashFiles('.tflint.hcl') }}
+
+  TfsecCheck:
+    name: Run tfsec Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repo Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Trivy tfsec scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: 'fs'
+          ignore-unfixed: true
+          scanners: 'misconfig'
+          format: 'table'
+          severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
+          exit-code: '1'
+  tfPlanNetworking:
+    name: Terraform Plan
+    uses: ./.github/workflows/tf-plan.yml
+    needs: [tfFormatValidate]
+    secrets: inherit
+    with:
+      ENVIRONMENT: networking
+      AWS_DEFAULT_REGION: ap-southeast-2
+
+  tfPlanApplication:
+    name: Terraform Plan
+    uses: ./.github/workflows/tf-plan.yml
+    needs: [tfFormatValidate]
+    secrets: inherit
+    with:
+      ENVIRONMENT: application
+      AWS_DEFAULT_REGION: ap-southeast-2
