@@ -1,7 +1,7 @@
 module "transit-tgw-attachment" {
   count       = var.environment == "networking" ? 1 : 0
   source      = "./modules/transit-gw"
-  vpc_id      = module.transit_vpc.vpc_id
+  vpc_id      = module.transit_vpc[0].vpc_id
   environment = var.environment
   vpc_attachments = {
     transit-tgw-attachment = {
@@ -13,7 +13,7 @@ module "transit-tgw-attachment" {
 module "devops-tgw-attachment" {
   count       = var.environment == "application" ? 1 : 0
   source      = "./modules/transit-gw"
-  vpc_id      = module.application_vpc.vpc_id
+  vpc_id      = module.application_vpc[0].vpc_id
   environment = var.environment
   vpc_attachments = {
     devops-tgw-attachment = {
