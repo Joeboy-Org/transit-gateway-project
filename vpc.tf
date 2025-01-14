@@ -1,5 +1,3 @@
-# Hello
-
 module "transit_vpc" {
   count          = var.environment == "networking" ? 1 : 0
   source         = "./modules/vpc"
