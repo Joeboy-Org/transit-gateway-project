@@ -73,7 +73,7 @@ resource "aws_route_table" "private" {
 }
 
 resource "aws_route_table_association" "public" {
-  for_each       = { for key, value in var.public_subnets : key => value if var.public_subnets != {} }
+  for_each       = { for key, value in var.public_subnets : key => value if var.public_subnets != {} && var.environment == "networking" }
   subnet_id      = aws_subnet.public[each.key].id
   route_table_id = aws_route_table.public[each.key].id
 }
@@ -85,7 +85,7 @@ resource "aws_route_table_association" "private" {
 }
 
 resource "aws_route" "public" {
-  for_each               = { for key, value in var.public_subnets : key => value if var.public_subnets != {} }
+  for_each               = { for key, value in var.public_subnets : key => value if var.public_subnets != {} && var.environment == "networking" }
   route_table_id         = aws_route_table.public[each.key].id
   destination_cidr_block = "0.0.0.0/0"
   gateway_id             = aws_internet_gateway.this[0].id
@@ -94,6 +94,6 @@ resource "aws_route" "public" {
 resource "aws_route" "private" {
   for_each               = { for key, value in var.private_subnets : key => value if var.private_subnets != {} }
   route_table_id         = aws_route_table.private[each.key].id
-  destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = aws_nat_gateway.this[each.key].id
+  destination_cidr_block = var.environment == "networking" ? "0.0.0.0/0" : null
+  nat_gateway_id         = var.environment == "networking" ? aws_nat_gateway.this[each.key].id : null
 }
