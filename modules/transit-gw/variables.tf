@@ -3,7 +3,9 @@ variable "environment" {
 }
 
 variable "vpc_attachments" {
-  type = map(map(string))
+  type = map(object({
+    subnet_ids = list(string)
+  }))
 }
 
 variable "vpc_id" {
