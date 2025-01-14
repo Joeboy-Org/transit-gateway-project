@@ -92,8 +92,8 @@ resource "aws_route" "public" {
 }
 
 resource "aws_route" "private" {
-  for_each               = { for key, value in var.private_subnets : key => value if var.private_subnets != {} }
+  for_each               = { for key, value in var.private_subnets : key => value if var.private_subnets != {} && var.environment == "networking" }
   route_table_id         = aws_route_table.private[each.key].id
-  destination_cidr_block = var.environment == "networking" ? "0.0.0.0/0" : null
-  nat_gateway_id         = var.environment == "networking" ? aws_nat_gateway.this[each.key].id : null
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.this[each.key].id
 }
