@@ -1,0 +1,179 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Creates the necessary resources for bootstrapping a Terraform environment in AWS. It provisions an S3 bucket for storing Terraform state files, a DynamoDB table for state locking, and an IAM role for GitHub Actions to manage the CI/CD process.
+Parameters:
+  Application:
+    Type: String
+    Description: The name of the application and purpose the AWS Account will host
+    Default: transit-gateway
+  Purpose:
+    Type: String
+    Description: The purpose of the resource
+    Default: tfstate
+  Environment:
+    Type: String
+    Description: The environment the resources are provisioned
+  AllowedGitHubOrg:
+    Type: String
+    Description: The GitHub Organization that contains the repo
+    Default: Joeboy-Org
+  AllowedGitHubRepo:
+    Type: String
+    Description: Allows the GitHub Actions within the specified Repo to assume the role. (DNS Repo)
+
+Resources:
+  TerraformStateS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${Purpose}-${Application}-${Environment}-${AWS::Region}-${AWS::AccountId}"
+      AccessControl: Private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration: 
+        Rules: 
+          - Id: "RemoveNonCurrentObjects"
+            Status: "Enabled"
+            NoncurrentVersionExpirationInDays: 365
+
+  TerraformStateS3BucketBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref TerraformStateS3Bucket
+        PolicyDocument:
+          Statement:
+            - Sid: OnlyAllowGitHubActionsRole
+              Effect: Deny
+              Principal: "*"
+              Action:
+                - s3:GetObject
+                - s3:GetObjectAcl
+                - s3:PutObject
+                - s3:PutObjectAcl
+                - s3:DeleteObject
+              Resource: !Sub arn:aws:s3:::${TerraformStateS3Bucket}/*
+              Condition:
+                ArnNotLike:
+                  aws:PrincipalArn:
+                    - !GetAtt GitHubActionsRole.Arn
+
+            - Sid: DenyInsecureTransport
+              Effect: Deny
+              Principal: "*"
+              Action: s3:*
+              Resource:
+                - !Sub arn:aws:s3:::${TerraformStateS3Bucket}/*
+                - !Sub arn:aws:s3:::${TerraformStateS3Bucket}
+              Condition:
+                Bool:
+                  aws:SecureTransport: "false"
+
+  TerraformStateLockDynamoDBTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: !Sub "${Purpose}-${Application}-${Environment}-${AWS::Region}-${AWS::AccountId}"
+        AttributeDefinitions:
+          - AttributeName: LockID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: LockID
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        SSESpecification:
+          SSEEnabled: true
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
+
+  TerraformPlanS3Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: !Sub tfplan-${Application}-${Environment}-${AWS::Region}-${AWS::AccountId}
+        AccessControl: Private
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: true
+          BlockPublicPolicy: true
+          IgnorePublicAcls: true
+          RestrictPublicBuckets: true
+        BucketEncryption:
+          ServerSideEncryptionConfiguration:
+            - ServerSideEncryptionByDefault:
+                SSEAlgorithm: AES256
+        VersioningConfiguration:
+          Status: Enabled
+        LifecycleConfiguration:
+          Rules:
+            - Id: DeleteObjectsOlderThan90Days
+              Status: Enabled
+              ExpirationInDays: 90
+
+  TerraformPlanS3BucketBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref TerraformPlanS3Bucket
+        PolicyDocument:
+          Statement:
+            - Sid: OnlyAllowGitHubActionsRole
+              Effect: Deny
+              Principal: "*"
+              Action:
+                - s3:GetObject
+                - s3:GetObjectAcl
+                - s3:PutObject
+                - s3:PutObjectAcl
+                - s3:DeleteObject
+              Resource: !Sub arn:aws:s3:::${TerraformPlanS3Bucket}/*
+              Condition:
+                ArnNotLike:
+                  aws:PrincipalArn:
+                    - !GetAtt GitHubActionsRole.Arn
+            - Sid: DenyInsecureTransport
+              Effect: Deny
+              Principal: "*"
+              Action: s3:*
+              Resource:
+                - !Sub arn:aws:s3:::${TerraformPlanS3Bucket}/*
+                - !Sub arn:aws:s3:::${TerraformPlanS3Bucket}
+              Condition:
+                Bool:
+                  aws:SecureTransport: "false"
+
+  GitHubIdentityProvider:
+      Type: AWS::IAM::OIDCProvider
+      Properties:
+        Url: https://token.actions.githubusercontent.com
+        ClientIdList: 
+        - "sts.amazonaws.com"
+        ThumbprintList:
+        - "74f3a68f16524f15424927704c9506f55a9316bd"
+      
+  # IAM Role for GitHub OIDC with the specified policies
+  GitHubActionsRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: !Sub transit-gateway-role-${AWS::Region}-${Environment}
+        Description: !Sub "The role for the CI/CD process in GitHub Actions allows access to the ${AllowedGitHubOrg}/${AllowedGitHubRepo} repository."
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Sid: RoleForGitHubActions
+              Effect: Allow
+              Principal:
+                Federated: !GetAtt GitHubIdentityProvider.Arn
+              Action:
+                - "sts:AssumeRoleWithWebIdentity"
+              Condition:
+                StringEquals:
+                  "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+                StringLike:
+                  "token.actions.githubusercontent.com:sub": !Sub "repo:${AllowedGitHubOrg}/${AllowedGitHubRepo}:*"
+        ManagedPolicyArns: 
+        - "arn:aws:iam::aws:policy/AdministratorAccess"

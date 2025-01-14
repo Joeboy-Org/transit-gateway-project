@@ -1,0 +1,74 @@
+name: Terraform Apply Deployment
+
+on:
+  workflow_call:
+    inputs:
+      ENVIRONMENT:
+        required: true
+        type: string
+      AWS_DEFAULT_REGION:
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency: tf_${{ inputs.ENVIRONMENT }}
+
+jobs:
+  tf_plan:
+    name: Terraform Plan - ${{ inputs.ENVIRONMENT }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.ENVIRONMENT }}
+    steps:
+      - name: Repo Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ inputs.AWS_DEFAULT_REGION }}
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+
+      - name: Terraform Init
+        run: terraform init -backend-config=environments/${{ inputs.ENVIRONMENT }}/backend.tfvars
+
+      - name: Terraform Plan
+        run: terraform plan -var-file=environments/${{ inputs.ENVIRONMENT }}/${{ inputs.ENVIRONMENT }}.tfvars -out=${{ inputs.ENVIRONMENT }}-terraform-plan-${{ github.run_id }} 
+
+      - name: Upload tfplan to S3 bucket
+        run: aws s3 cp ${{ inputs.ENVIRONMENT }}-terraform-plan-${{ github.run_id }} s3://tfplan-transit-gateway-networking-${{ inputs.AWS_DEFAULT_REGION }}-${{ secrets.AWS_ACCOUNT_ID }} --region ${{ inputs.AWS_DEFAULT_REGION }}
+
+  tf_approval:
+    name: Manual Approval - ${{ inputs.ENVIRONMENT }}
+    needs: [tf_plan]
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.ENVIRONMENT }}-approval-group
+    steps:
+        - name: Invoke ${{ inputs.ENVIRONMENT }} Deployment
+          run: echo "Invoke ${{ inputs.ENVIRONMENT }} Deployment"
+
+  TerraformApply:
+    name: Terraform Apply - ${{ inputs.ENVIRONMENT }}
+    needs: [tf_approval]
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.ENVIRONMENT }}
+    steps:
+        - name: Repo Checkout
+          uses: actions/checkout@v4
+
+        - name: Configure AWS Credentials
+          uses: aws-actions/configure-aws-credentials@v4
+          with:
+            aws-region: ${{ inputs.AWS_DEFAULT_REGION }}
+            role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+
+        - name: Terraform Init
+          run: terraform init -backend-config=environments/${{ inputs.ENVIRONMENT }}/backend.tfvars
+        
+        - name: Download tfplan from S3 bucket
+          run: aws s3 cp s3://tfplan-transit-gateway-networking-${{ inputs.AWS_DEFAULT_REGION }}-${{ secrets.AWS_ACCOUNT_ID }}/${{ inputs.ENVIRONMENT }}-terraform-plan-${{ github.run_id }} ${{ inputs.ENVIRONMENT }}-terraform-plan-${{ github.run_id }} --region ${{ inputs.AWS_DEFAULT_REGION }}
+
+        - name: Terraform Apply
+          run: terraform apply -input=false ${{ inputs.ENVIRONMENT }}-terraform-plan-${{ github.run_id }}
