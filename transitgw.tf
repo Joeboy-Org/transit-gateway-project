@@ -16,7 +16,7 @@ module "devops-tgw-attachment" {
   source      = "./modules/transit-gw"
   vpc_id      = module.application_vpc[0].vpc_id
   environment = var.environment
-  app_account_id = data.aws_caller_identity.application[0].account_id
+  app_account_id = var.aws_account_id
   vpc_attachments = {
     devops-tgw-attachment = {
       subnet_ids = [module.application_vpc[0].private_subnet_id["private-subnet-A"].id]
