@@ -41,7 +41,7 @@ jobs:
         run: terraform plan -var-file=environments/${{ inputs.ENVIRONMENT }}/${{ inputs.ENVIRONMENT }}.tfvars -out=${{ inputs.ENVIRONMENT }}-terraform-plan-${{ github.run_id }} 
 
       - name: Upload tfplan to S3 bucket
-        run: aws s3 cp ${{ inputs.ENVIRONMENT }}-terraform-plan-${{ github.run_id }} s3://tfplan-transit-gateway-networking-${{ inputs.AWS_DEFAULT_REGION }}-${{ secrets.AWS_ACCOUNT_ID }} --region ${{ inputs.AWS_DEFAULT_REGION }}
+        run: aws s3 cp ${{ inputs.ENVIRONMENT }}-terraform-plan-${{ github.run_id }} s3://tfplan-transit-gateway-${{ inputs.ENVIRONMENT }}-${{ inputs.AWS_DEFAULT_REGION }}-${{ secrets.AWS_ACCOUNT_ID }} --region ${{ inputs.AWS_DEFAULT_REGION }}
 
   tf_approval:
     name: Manual Approval - ${{ inputs.ENVIRONMENT }}
@@ -74,7 +74,7 @@ jobs:
           run: terraform init -backend-config=environments/${{ inputs.ENVIRONMENT }}/backend.tfvars
         
         - name: Download tfplan from S3 bucket
-          run: aws s3 cp s3://tfplan-transit-gateway-networking-${{ inputs.AWS_DEFAULT_REGION }}-${{ secrets.AWS_ACCOUNT_ID }}/${{ inputs.ENVIRONMENT }}-terraform-plan-${{ github.run_id }} ${{ inputs.ENVIRONMENT }}-terraform-plan-${{ github.run_id }} --region ${{ inputs.AWS_DEFAULT_REGION }}
+          run: aws s3 cp s3://tfplan-transit-gateway-${{ inputs.ENVIRONMENT }}-${{ inputs.AWS_DEFAULT_REGION }}-${{ secrets.AWS_ACCOUNT_ID }}/${{ inputs.ENVIRONMENT }}-terraform-plan-${{ github.run_id }} ${{ inputs.ENVIRONMENT }}-terraform-plan-${{ github.run_id }} --region ${{ inputs.AWS_DEFAULT_REGION }}
 
         - name: Terraform Apply
           run: terraform apply -input=false ${{ inputs.ENVIRONMENT }}-terraform-plan-${{ github.run_id }}
