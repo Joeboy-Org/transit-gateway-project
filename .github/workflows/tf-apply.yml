@@ -30,6 +30,9 @@ jobs:
         with:
           aws-region: ${{ inputs.AWS_DEFAULT_REGION }}
           role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ vars.TERRAFORM_VERSION }}
 
       - name: Terraform Init
         run: terraform init -backend-config=environments/${{ inputs.ENVIRONMENT }}/backend.tfvars
@@ -63,6 +66,9 @@ jobs:
           with:
             aws-region: ${{ inputs.AWS_DEFAULT_REGION }}
             role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+        - uses: hashicorp/setup-terraform@v3
+          with:
+            terraform_version: ${{ vars.TERRAFORM_VERSION }}
 
         - name: Terraform Init
           run: terraform init -backend-config=environments/${{ inputs.ENVIRONMENT }}/backend.tfvars
