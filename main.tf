@@ -24,7 +24,7 @@ module "transit_vpc" {
 module "application_vpc" {
   count = var.environment == "application" ? 1 : 0
   source = "./modules/vpc"
-  vpc_name = "devops-app"
+  vpc_name = "devops"
   vpc_cidr_block = "10.17.0.0/16"
   private_subnets = {
     private-subnet-A = {

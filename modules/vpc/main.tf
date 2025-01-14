@@ -39,12 +39,13 @@ resource "aws_internet_gateway" "this" {
 }
 
 resource "aws_eip" "this" {
+  count  = var.environment == "networking" ? 1 : 0
   domain = "vpc"
 }
 
 resource "aws_nat_gateway" "this" {
   for_each      = { for key, value in var.public_subnets : key => value if var.public_subnets != {} }
-  allocation_id = aws_eip.this.id
+  allocation_id = aws_eip.this[0].id
   subnet_id     = aws_subnet.public[each.key].id
 
   tags = {
