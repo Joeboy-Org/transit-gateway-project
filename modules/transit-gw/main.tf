@@ -29,6 +29,9 @@ resource "aws_ram_principal_association" "this" {
 
   principal          = data.aws_caller_identity.application[0].account_id
   resource_share_arn = aws_ram_resource_share.this[0].id
+  depends_on = [
+    data.aws_caller_identity.application[0]
+  ]
 }
 
 # Create the VPC attachment in the second account...
