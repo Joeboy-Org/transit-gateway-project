@@ -5,7 +5,7 @@ module "transit-tgw-attachment" {
   environment = var.environment
   vpc_attachments = {
     transit-tgw-attachment = {
-      subnet_ids = [module.transit_vpc.private_subnet_id["private-subnet-A"].id]
+      subnet_ids = [module.transit_vpc[0].private_subnet_id["private-subnet-A"].id]
     }
   }
 }
@@ -17,7 +17,7 @@ module "devops-tgw-attachment" {
   environment = var.environment
   vpc_attachments = {
     devops-tgw-attachment = {
-      subnet_ids = [module.application_vpc.private_subnet_id["private-subnet-A"].id]
+      subnet_ids = [module.application_vpc[0].private_subnet_id["private-subnet-A"].id]
     }
   }
 }
