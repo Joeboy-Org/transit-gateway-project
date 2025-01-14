@@ -1,6 +1,7 @@
 # Hello
 
 module "transit_vpc" {
+  count = var.environment == "networking" ? 1 : 0
   source = "./modules/vpc"
   vpc_name = "transit"
   vpc_cidr_block = "10.16.0.0/16"
@@ -21,6 +22,7 @@ module "transit_vpc" {
 }
 
 module "application_vpc" {
+  count = var.environment == "application" ? 1 : 0
   source = "./modules/vpc"
   vpc_name = "devops-app"
   vpc_cidr_block = "10.17.0.0/16"
@@ -28,7 +30,6 @@ module "application_vpc" {
     private-subnet-A = {
       availability_zone       = "ap-southeast-2a"
       cidr_block              = "10.17.1.0/24"
-      natgw_pub_sub_name       =  ""
     }
   }
   public_subnets = {}
