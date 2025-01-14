@@ -28,6 +28,7 @@ module "application_vpc" {
     private-subnet-A = {
       availability_zone       = "ap-southeast-2a"
       cidr_block              = "10.17.1.0/24"
+      natgw_pub_sub_name       =  ""
     }
   }
   public_subnets = {}
