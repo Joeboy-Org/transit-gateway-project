@@ -3,7 +3,7 @@ module "transit-tgw-attachment" {
   source         = "./modules/transit-gw"
   vpc_id         = module.transit_vpc[0].vpc_id
   environment    = var.environment
-  app_account_id = data.aws_caller_identity.application[0].account_id
+  app_account_id = "207567790440"
   vpc_attachments = {
     transit-tgw-attachment = {
       subnet_ids = [module.transit_vpc[0].private_subnet_id["private-subnet-A"].id]
