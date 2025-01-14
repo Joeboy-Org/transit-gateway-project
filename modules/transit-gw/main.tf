@@ -27,7 +27,7 @@ resource "aws_ram_resource_association" "this" {
 resource "aws_ram_principal_association" "this" {
   count = var.environment == "networking" ? 1 : 0
 
-  principal          = data.aws_caller_identity.application[0].id
+  principal          = data.aws_caller_identity.application[0].account_id
   resource_share_arn = aws_ram_resource_share.this[0].id
 }
 
