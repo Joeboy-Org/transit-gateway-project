@@ -122,7 +122,7 @@ resource "aws_route" "tgw_private_routes" {
         cidr_block = route_value.cidr_block
         subnet_key = subnet_key
       }
-      if var.tgw_vpc_public_routes != {}
+      if var.tgw_vpc_private_routes != {}
     }
   ]...)
   route_table_id         = aws_route_table.private[each.value.subnet_key].id
