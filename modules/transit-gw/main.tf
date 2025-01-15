@@ -68,7 +68,7 @@ resource "aws_ec2_transit_gateway_route_table_association" "transit" {
 resource "aws_ec2_transit_gateway_route" "transit" {
   for_each                       = toset(var.devops_cidrs)
   destination_cidr_block         = each.key
-  transit_gateway_attachment_id  = data.aws_ec2_transit_gateway_attachment.devops_application.resource_id
+  transit_gateway_attachment_id  = data.aws_ec2_transit_gateway_attachment.devops_application.id
   transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.transit[0].id
 }
 
@@ -83,7 +83,7 @@ resource "aws_ec2_transit_gateway_route_table" "devops_application" {
 
 resource "aws_ec2_transit_gateway_route_table_association" "devops_application" {
   count                          = var.environment == "networking" ? 1 : 0
-  transit_gateway_attachment_id  = data.aws_ec2_transit_gateway_attachment.devops_application.resource_id
+  transit_gateway_attachment_id  = data.aws_ec2_transit_gateway_attachment.devops_application.id
   transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.devops_application[0].id
 }
 
