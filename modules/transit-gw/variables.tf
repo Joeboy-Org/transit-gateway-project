@@ -15,3 +15,11 @@ variable "vpc_id" {
 variable "app_account_id" {
   type = string
 }
+
+variable "devops_cidrs" {
+  type = list(string)
+}
+
+variable "transit_cidrs" {
+  type = list(string)
+}
