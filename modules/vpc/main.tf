@@ -98,3 +98,34 @@ resource "aws_route" "private" {
   destination_cidr_block = "0.0.0.0/0"
   nat_gateway_id         = aws_nat_gateway.this[each.value.natgw_pub_sub_name].id
 }
+
+resource "aws_route" "tgw_public_routes" {
+  for_each = merge([
+    for route_key, route_value in var.tgw_vpc_public_routes : {
+      for subnet_key in route_value.public_subnet_keys : route_key => {
+        cidr_block = route_value.cidr_block
+        subnet_key = subnet_key
+      }
+      if var.tgw_vpc_public_routes != {} && var.environment == "networking"
+    }
+  ]...)
+
+  route_table_id         = aws_route_table.public[each.value.subnet_key].id
+  destination_cidr_block = each.value.cidr_block
+  transit_gateway_id     = var.transit_gateway_id
+}
+
+resource "aws_route" "tgw_private_routes" {
+  for_each = merge([
+    for route_key, route_value in var.tgw_vpc_private_routes : {
+      for subnet_key in route_value.private_subnet_keys : route_key => {
+        cidr_block = route_value.cidr_block
+        subnet_key = subnet_key
+      }
+      if var.tgw_vpc_private_routes != {}
+    }
+  ]...)
+  route_table_id         = aws_route_table.private[each.value.subnet_key].id
+  destination_cidr_block = each.value.cidr_block
+  transit_gateway_id     = var.transit_gateway_id
+}
