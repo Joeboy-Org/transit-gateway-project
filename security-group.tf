@@ -54,14 +54,14 @@ resource "aws_security_group" "vpc_endpoint_sg" {
     description = "Allow Http from a devops vpc subnet CIDR"
     from_port   = 80
     to_port     = 80
-    protocol    = "http"
+    protocol    = "tcp"
     cidr_blocks = ["10.17.1.0/24"]
   }
   ingress {
     description = "Allow Https from a devops vpc subnet CIDR"
     from_port   = 443
     to_port     = 443
-    protocol    = "https"
+    protocol    = "tcp"
     cidr_blocks = ["10.17.1.0/24"]
   }
 }
