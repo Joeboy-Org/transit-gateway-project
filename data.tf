@@ -1,3 +1,4 @@
-# data "aws_caller_identity" "application" {
-#   count = var.environment == "application" ? 1 : 0
-# }
+data "aws_ec2_transit_gateway" "this" {
+  count = var.environment == "application" ? 1 : 0
+  id    = "tgw-02a36e4a5e340942d"
+}
