@@ -1,5 +1,5 @@
 resource "aws_ec2_transit_gateway" "this" {
-  count = var.environment == "networking" ? 1 : 0
+  count                          = var.environment == "networking" ? 1 : 0
   auto_accept_shared_attachments = "enable"
   tags = {
     Name = "${var.environment}-transit-gateway"
