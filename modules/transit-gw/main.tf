@@ -33,7 +33,7 @@ resource "aws_ram_principal_association" "this" {
 
 # Create the VPC attachment in the second account...
 resource "aws_ec2_transit_gateway_vpc_attachment" "this" {
-  for_each = { for key, value in var.vpc_attachments : key => value }
+  for_each = { for key, value in var.vpc_attachments : key => value if var.environment == "networking"}
 
   depends_on = [
     aws_ram_principal_association.this[0],
@@ -61,7 +61,7 @@ resource "aws_ec2_transit_gateway_route_table" "transit" {
 
 resource "aws_ec2_transit_gateway_route_table_association" "transit" {
   count                          = var.environment == "networking" ? 1 : 0
-  transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.this.id
+  transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.this["transit-tgw-attachment"].id
   transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.transit[0].id
 }
 
@@ -89,7 +89,7 @@ resource "aws_ec2_transit_gateway_route_table_association" "devops_application" 
 resource "aws_ec2_transit_gateway_route" "devops_application" {
   for_each                       = toset(var.transit_cidrs)
   destination_cidr_block         = each.key
-  transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.this.id
+  transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.this["transit-tgw-attachment"].id
   transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.devops_application[0].id
 }
 
