@@ -27,7 +27,7 @@ variable "tgw_vpc_public_routes" {
 }
 variable "tgw_vpc_private_routes" {
   type = map(object({
-    cidr_block         = string
-    public_subnet_keys = list(string)
+    cidr_block          = string
+    private_subnet_keys = list(string)
   }))
 }
