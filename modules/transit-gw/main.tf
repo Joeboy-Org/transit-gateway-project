@@ -33,7 +33,7 @@ resource "aws_ram_principal_association" "this" {
 
 # Create the VPC attachment in the second account...
 resource "aws_ec2_transit_gateway_vpc_attachment" "this" {
-  for_each = { for key, value in var.vpc_attachments : key => value if var.environment == "networking"}
+  for_each = { for key, value in var.vpc_attachments : key => value if var.environment == "networking" }
 
   depends_on = [
     aws_ram_principal_association.this[0],
@@ -73,6 +73,7 @@ resource "aws_ec2_transit_gateway_route" "transit" {
 }
 
 resource "aws_ec2_transit_gateway_route_table" "devops_application" {
+  count              = var.environment == "networking" ? 1 : 0
   transit_gateway_id = aws_ec2_transit_gateway.this[0].id
 
   tags = {
